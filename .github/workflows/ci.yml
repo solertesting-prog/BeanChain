@@ -10,6 +10,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  LOGS: ${{ github.workspace }}/ci-logs
+
 jobs:
   contracts:
     name: Smart contracts
@@ -20,17 +30,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: mkdir -p "$LOGS"
       - name: Instalar dependencias
-        run: pnpm install --no-frozen-lockfile
-      - name: Subir lockfile generado
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lock
-          path: pnpm-lock.yaml
+        run: pnpm install --no-frozen-lockfile 2>&1 | tee "$LOGS/install.log"
       - name: Compilar y exportar ABI
-        run: pnpm --filter @beanchain/contracts build
+        run: pnpm --filter @beanchain/contracts build 2>&1 | tee "$LOGS/compile.log"
       - name: Tests de contratos
-        run: pnpm --filter @beanchain/contracts test
+        run: pnpm --filter @beanchain/contracts test 2>&1 | tee "$LOGS/test.log"
+      - name: Tamaño de los contratos
+        run: |
+          cd packages/contracts
+          node -e '
+            const fs=require("fs");
+            for (const n of ["IdentityRegistry","HarvestCompliance","HarvestToken","DocumentRegistry"]) {
+              const a=JSON.parse(fs.readFileSync(`abi/${n}.json`,"utf8"));
+              console.log(n, ((a.bytecode.length-2)/2), "bytes (límite 24576)");
+            }' 2>&1 | tee "$LOGS/sizes.log"
+      - name: Publicar resultados
+        if: always()
+        run: .github/scripts/publish-ci-output.sh contracts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   api:
     name: API
@@ -58,28 +78,55 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: mkdir -p "$LOGS"
       - name: Instalar dependencias
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile 2>&1 | tee "$LOGS/install.log"
       - name: Compilar contratos (la API usa sus ABI)
-        run: pnpm --filter @beanchain/contracts build
+        run: pnpm --filter @beanchain/contracts build 2>&1 | tee "$LOGS/contracts.log"
       - name: Generar cliente Prisma
-        run: pnpm --filter @beanchain/api prisma:generate
+        run: pnpm --filter @beanchain/api prisma:generate 2>&1 | tee "$LOGS/prisma-generate.log"
       - name: Comprobar tipos
-        run: pnpm --filter @beanchain/api lint
+        run: pnpm --filter @beanchain/api lint 2>&1 | tee "$LOGS/typecheck.log"
       - name: Compilar
-        run: pnpm --filter @beanchain/api build
+        run: pnpm --filter @beanchain/api build 2>&1 | tee "$LOGS/build.log"
       - name: Tests unitarios
-        run: pnpm --filter @beanchain/api test
+        run: pnpm --filter @beanchain/api test -- --verbose 2>&1 | tee "$LOGS/unit.log"
       - name: Aplicar esquema
-        run: pnpm --filter @beanchain/api prisma:push
+        run: pnpm --filter @beanchain/api prisma:push 2>&1 | tee "$LOGS/db-push.log"
       - name: Tests e2e
-        run: pnpm --filter @beanchain/api test:e2e
+        run: pnpm --filter @beanchain/api test:e2e -- --verbose 2>&1 | tee "$LOGS/e2e.log"
       - name: Generar SQL de la migración inicial
+        if: always()
         run: |
           cd apps/api
-          npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > init-migration.sql
-      - name: Subir SQL de migración
-        uses: actions/upload-artifact@v4
+          npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > "$LOGS/init-migration.sql"
+      - name: Publicar resultados
+        if: always()
+        run: .github/scripts/publish-ci-output.sh api
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_API_URL: https://api.example.com/v1
+      NEXT_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          name: init-migration
-          path: apps/api/init-migration.sql
+          node-version: 22
+      - run: mkdir -p "$LOGS"
+      - name: Instalar dependencias
+        run: pnpm install --no-frozen-lockfile 2>&1 | tee "$LOGS/install.log"
+      - name: Comprobar tipos
+        run: pnpm --filter @beanchain/web lint 2>&1 | tee "$LOGS/typecheck.log"
+      - name: Compilar
+        run: pnpm --filter @beanchain/web build 2>&1 | tee "$LOGS/build.log"
+      - name: Publicar resultados
+        if: always()
+        run: .github/scripts/publish-ci-output.sh web
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
