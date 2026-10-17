@@ -71,6 +71,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql://beanchain:beanchain@localhost:5432/beanchain?schema=public
+      SHADOW_DATABASE_URL: postgresql://beanchain:beanchain@localhost:5432/beanchain_shadow?schema=public
       NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
@@ -90,16 +91,21 @@ jobs:
       - name: Compilar
         run: pnpm --filter @beanchain/api build 2>&1 | tee "$LOGS/build.log"
       - name: Tests unitarios
-        run: pnpm --filter @beanchain/api test -- --verbose 2>&1 | tee "$LOGS/unit.log"
-      - name: Aplicar esquema
-        run: pnpm --filter @beanchain/api prisma:push 2>&1 | tee "$LOGS/db-push.log"
+        run: pnpm --filter @beanchain/api test --verbose 2>&1 | tee "$LOGS/unit.log"
+      - name: Aplicar migraciones
+        run: pnpm --filter @beanchain/api prisma:deploy 2>&1 | tee "$LOGS/db-migrate.log"
+      - name: Comprobar que las migraciones cuadran con el esquema
+        run: |
+          PGPASSWORD=beanchain psql -h localhost -U beanchain -d beanchain -c 'CREATE DATABASE beanchain_shadow' >/dev/null
+          cd apps/api
+          npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url "$SHADOW_DATABASE_URL" --exit-code 2>&1 | tee "$LOGS/migrate-drift.log" || { echo "::error::El esquema Prisma tiene cambios sin migración"; exit 1; }
       - name: Tests e2e
-        run: pnpm --filter @beanchain/api test:e2e -- --verbose 2>&1 | tee "$LOGS/e2e.log"
-      - name: Generar SQL de la migración inicial
+        run: pnpm --filter @beanchain/api test:e2e --verbose 2>&1 | tee "$LOGS/e2e.log"
+      - name: Generar SQL de cambios pendientes del esquema
         if: always()
         run: |
           cd apps/api
-          npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > "$LOGS/init-migration.sql"
+          npx prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma --shadow-database-url "$SHADOW_DATABASE_URL" --script > "$LOGS/pending-migration.sql" || true
       - name: Publicar resultados
         if: always()
         run: .github/scripts/publish-ci-output.sh api
