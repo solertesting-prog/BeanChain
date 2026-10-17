@@ -1,0 +1,39 @@
+
+> @beanchain/api@0.1.0 test:e2e /home/runner/work/BeanChain/BeanChain/apps/api
+> jest --config test/jest-e2e.json --runInBand --verbose
+
+PASS test/app.e2e-spec.ts (7.649 s)
+  BeanChain (e2e)
+    ✓ responde al health check (42 ms)
+    ✓ el administrador inicia sesión (29 ms)
+    ✓ rechaza rutas de administración a anónimos (4 ms)
+    ✓ crea una finca y registra la revisión de sanciones (27 ms)
+    ✓ crea la oportunidad en borrador (14 ms)
+    ✓ no publica sin la documentación obligatoria (7 ms)
+    ✓ sube los documentos y los ancla (503 ms)
+    ✓ publica y despliega el token (533 ms)
+    ✓ el token existe on-chain con su emisión máxima y 0 decimales (54 ms)
+    ✓ el informe agronómico está anclado en el DocumentRegistry (13 ms)
+    ✓ la oportunidad aparece en el escaparate público (37 ms)
+    ✓ rechaza registros desde países bloqueados (4 ms)
+    ✓ registra al inversor (349 ms)
+    ✓ no deja invertir sin KYC (14 ms)
+    ✓ completa el KYC y registra la wallet on-chain (179 ms)
+    ✓ la wallet del inversor queda verificada en el IdentityRegistry (27 ms)
+    ✓ un inversor con KYC ve los documentos para inversores (23 ms)
+    ✓ respeta el máximo por inversor y el aviso a minoristas (27 ms)
+    ✓ reserva tokens con transferencia bancaria (33 ms)
+    ✓ concilia el pago y emite los tokens (149 ms)
+    ✓ los tokens están en la wallet del inversor on-chain (13 ms)
+    ✓ la cartera refleja los tokens (9 ms)
+    ✓ avanza el ciclo de vida y publica novedades (44 ms)
+    ✓ ejecuta un reparto y la cartera lo refleja (354 ms)
+    ✓ el reparto llega en stablecoin a la wallet custodiada (13 ms)
+    ✓ verifica públicamente un documento por su hash (7 ms)
+    ✓ las estadísticas del backoffice cuadran (17 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       27 passed, 27 total
+Snapshots:   0 total
+Time:        7.865 s
+Ran all test suites.
