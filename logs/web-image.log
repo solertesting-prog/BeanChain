@@ -1,0 +1,123 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 836B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-alpine
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 216B done
+#3 DONE 0.0s
+
+#4 [base 1/3] FROM docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+#4 CACHED
+
+#5 [runtime 2/4] WORKDIR /app
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 11.03kB 0.0s done
+#6 DONE 0.0s
+
+#7 [base 2/3] RUN corepack enable
+#7 DONE 0.2s
+
+#8 [base 3/3] WORKDIR /repo
+#8 DONE 0.0s
+
+#9 [build 1/3] COPY . .
+#9 DONE 0.0s
+
+#10 [build 2/3] RUN pnpm install --no-frozen-lockfile --filter @beanchain/web...
+#10 0.200 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.28.0.tgz
+#10 1.781 Lockfile is up to date, resolution step is skipped
+#10 1.848 Progress: resolved 1, reused 0, downloaded 0, added 0
+#10 1.885 .                                        | +135 ++++++++++++++
+#10 2.854 Progress: resolved 135, reused 0, downloaded 79, added 31
+#10 2.949 
+#10 2.949    ╭───────────────────────────────────────────────╮
+#10 2.949    │                                               │
+#10 2.949    │     Update available! 10.28.0 → 12.14.0.      │
+#10 2.949    │     Changelog: https://pnpm.io/v/12.14.0      │
+#10 2.949    │   To update, run: corepack use pnpm@12.14.0   │
+#10 2.949    │                                               │
+#10 2.949    ╰───────────────────────────────────────────────╯
+#10 2.949 
+#10 3.856 Progress: resolved 135, reused 0, downloaded 110, added 41
+#10 4.342 Progress: resolved 135, reused 0, downloaded 135, added 135, done
+#10 4.468 Done in 3.2s using pnpm v10.28.0
+#10 DONE 5.5s
+
+#11 [build 3/3] RUN pnpm --filter @beanchain/web build
+#11 0.554 
+#11 0.554 > @beanchain/web@0.1.0 build /repo/apps/web
+#11 0.554 > next build
+#11 0.554 
+#11 1.265   ▲ Next.js 14.2.35
+#11 1.265 
+#11 1.284    Creating an optimized production build ...
+#11 16.49  ✓ Compiled successfully
+#11 16.49    Linting and checking validity of types ...
+#11 21.60    Collecting page data ...
+#11 22.38    Generating static pages (0/26) ...
+#11 23.31    Generating static pages (6/26) 
+#11 23.66    Generating static pages (12/26) 
+#11 23.79    Generating static pages (19/26) 
+#11 23.87  ✓ Generating static pages (26/26)
+#11 24.05    Finalizing page optimization ...
+#11 24.05    Collecting build traces ...
+#11 36.34 
+#11 36.34 Route (app)                              Size     First Load JS
+#11 36.34 ┌ ○ /                                    1.96 kB         103 kB
+#11 36.34 ├ ○ /_not-found                          150 B          87.4 kB
+#11 36.34 ├ ○ /admin                               5.08 kB         101 kB
+#11 36.34 ├ ○ /admin/auditoria                     4.63 kB         101 kB
+#11 36.34 ├ ○ /admin/fincas                        4.54 kB         100 kB
+#11 36.34 ├ ƒ /admin/fincas/[id]                   4.13 kB         104 kB
+#11 36.34 ├ ○ /admin/fincas/nueva                  372 B           100 kB
+#11 36.34 ├ ○ /admin/inversiones                   5.45 kB         101 kB
+#11 36.34 ├ ○ /admin/kyc                           4.98 kB         101 kB
+#11 36.34 ├ ○ /admin/oportunidades                 4.58 kB         101 kB
+#11 36.34 ├ ƒ /admin/oportunidades/[id]            5.01 kB         108 kB
+#11 36.34 ├ ○ /admin/oportunidades/nueva           595 B           103 kB
+#11 36.34 ├ ○ /admin/usuarios                      5.47 kB         101 kB
+#11 36.34 ├ ○ /cartera                             7.39 kB         103 kB
+#11 36.34 ├ ○ /como-funciona                       178 B          96.1 kB
+#11 36.34 ├ ○ /entrar                              3.9 kB         99.9 kB
+#11 36.34 ├ ○ /notificaciones                      5.38 kB         101 kB
+#11 36.34 ├ ○ /oportunidades                       972 B           102 kB
+#11 36.34 ├ ƒ /oportunidades/[slug]                4.93 kB         106 kB
+#11 36.34 ├ ƒ /oportunidades/[slug]/invertir       7.71 kB         104 kB
+#11 36.34 ├ ○ /perfil                              15.3 kB         111 kB
+#11 36.34 ├ ○ /perfil/verificacion                 6.67 kB         103 kB
+#11 36.34 ├ ○ /privacidad                          150 B          87.4 kB
+#11 36.34 ├ ○ /registro                            5.6 kB          102 kB
+#11 36.34 ├ ○ /riesgos                             150 B          87.4 kB
+#11 36.34 ├ ○ /terminos                            150 B          87.4 kB
+#11 36.34 ├ ○ /verificar                           4.95 kB         101 kB
+#11 36.34 └ ○ /verificar-email                     3.49 kB        99.5 kB
+#11 36.34 + First Load JS shared by all            87.3 kB
+#11 36.34   ├ chunks/5b8f0dd8-a5881760e78935fb.js  53.6 kB
+#11 36.34   ├ chunks/749-f0d50c453194d9e0.js       31.7 kB
+#11 36.34   └ other shared chunks (total)          1.9 kB
+#11 36.34 
+#11 36.34 
+#11 36.34 ○  (Static)   prerendered as static content
+#11 36.34 ƒ  (Dynamic)  server-rendered on demand
+#11 36.34 
+#11 DONE 36.4s
+
+#12 [runtime 3/4] COPY --from=build /repo/apps/web/.next/standalone ./
+#12 DONE 0.3s
+
+#13 [runtime 4/4] COPY --from=build /repo/apps/web/.next/static ./apps/web/.next/static
+#13 DONE 0.0s
+
+#14 exporting to image
+#14 exporting layers
+#14 exporting layers 0.5s done
+#14 writing image sha256:daf6af8f829f7cbc47e1a367de9ffec2099b92678875aee227f8137512a18a76 done
+#14 naming to docker.io/library/beanchain-web done
+#14 DONE 0.6s

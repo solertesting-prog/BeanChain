@@ -1,0 +1,145 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 676B done
+#1 DONE 0.0s
+
+#2 [auth] library/node:pull token for registry-1.docker.io
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/node:22-alpine
+#3 DONE 0.3s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 216B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 871.42kB 0.0s done
+#5 DONE 0.0s
+
+#6 [base 1/3] FROM docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
+#6 resolve docker.io/library/node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 done
+#6 sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 6.41kB / 6.41kB done
+#6 sha256:2c752226d477b4a886378baa95b9af252be59301b725fdb0b7e15208131505a8 1.72kB / 1.72kB done
+#6 sha256:7c3b093add7c43400ee83b815ab2cda98794a10045bcf76ce9bb2f89b97cbc5c 6.48kB / 6.48kB done
+#6 sha256:f7f2d304681aaa935c9cfd180850cf616ae843efce7682873d6521ded7268937 25.17MB / 55.59MB 0.1s
+#6 sha256:e554276b05e6306c5ad33cd85bfa7f0693083e21f6114db5abf60a20fb413039 1.26MB / 1.26MB 0.1s done
+#6 sha256:d39db1cf9caa4f49c5a2e67111fbe6e0d5eea8ede550cb82f3dc2b79712688d6 447B / 447B 0.0s done
+#6 sha256:f7f2d304681aaa935c9cfd180850cf616ae843efce7682873d6521ded7268937 55.59MB / 55.59MB 0.2s done
+#6 extracting sha256:f7f2d304681aaa935c9cfd180850cf616ae843efce7682873d6521ded7268937
+#6 extracting sha256:f7f2d304681aaa935c9cfd180850cf616ae843efce7682873d6521ded7268937 1.3s done
+#6 extracting sha256:e554276b05e6306c5ad33cd85bfa7f0693083e21f6114db5abf60a20fb413039
+#6 extracting sha256:e554276b05e6306c5ad33cd85bfa7f0693083e21f6114db5abf60a20fb413039 0.0s done
+#6 extracting sha256:d39db1cf9caa4f49c5a2e67111fbe6e0d5eea8ede550cb82f3dc2b79712688d6 done
+#6 DONE 4.1s
+
+#7 [base 2/3] RUN apk add --no-cache openssl && corepack enable
+#7 0.775 (1/3) Upgrading libcrypto3 (3.5.8-r0 -> 3.5.9-r0)
+#7 0.811 (2/3) Upgrading libssl3 (3.5.8-r0 -> 3.5.9-r0)
+#7 0.819 (3/3) Installing openssl (3.5.9-r0)
+#7 0.827 Executing busybox-1.37.0-r31.trigger
+#7 0.843 OK: 11.6 MiB in 19 packages
+#7 DONE 1.0s
+
+#8 [base 3/3] WORKDIR /repo
+#8 DONE 0.0s
+
+#9 [build 1/3] COPY . .
+#9 DONE 0.0s
+
+#10 [build 2/3] RUN pnpm install --no-frozen-lockfile
+#10 0.185 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.28.0.tgz
+#10 1.613 Scope: all 4 workspace projects
+#10 1.739 Lockfile is up to date, resolution step is skipped
+#10 1.827 Progress: resolved 1, reused 0, downloaded 0, added 0
+#10 1.988 Packages: +1104
+#10 1.988 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#10 2.244 
+#10 2.244    ╭───────────────────────────────────────────────╮
+#10 2.244    │                                               │
+#10 2.244    │     Update available! 10.28.0 → 12.14.0.      │
+#10 2.244    │     Changelog: https://pnpm.io/v/12.14.0      │
+#10 2.244    │   To update, run: corepack use pnpm@12.14.0   │
+#10 2.244    │                                               │
+#10 2.244    ╰───────────────────────────────────────────────╯
+#10 2.244 
+#10 2.828 Progress: resolved 1104, reused 0, downloaded 44, added 12
+#10 3.828 Progress: resolved 1104, reused 0, downloaded 186, added 66
+#10 4.831 Progress: resolved 1104, reused 0, downloaded 412, added 202
+#10 5.847 Progress: resolved 1104, reused 0, downloaded 672, added 376
+#10 6.848 Progress: resolved 1104, reused 0, downloaded 703, added 392
+#10 7.847 Progress: resolved 1104, reused 0, downloaded 761, added 425
+#10 8.851 Progress: resolved 1104, reused 0, downloaded 935, added 526
+#10 9.747 Progress: resolved 1104, reused 0, downloaded 1103, added 1104, done
+#10 10.24 .../node_modules/@prisma/engines postinstall$ node scripts/postinstall.js
+#10 10.25 .../node_modules/@nestjs/core postinstall$ opencollective || exit 0
+#10 10.25 .../node_modules/secp256k1 install$ node-gyp-build || exit 0
+#10 10.27 .../keccak@3.0.4/node_modules/keccak install$ node-gyp-build || exit 0
+#10 10.42 .../node_modules/secp256k1 install: Done
+#10 10.50 .../keccak@3.0.4/node_modules/keccak install: Done
+#10 10.62 .../node_modules/@nestjs/core postinstall:                            Thanks for installing nest 
+#10 10.62 .../node_modules/@nestjs/core postinstall:                  Please consider donating to our open collective
+#10 10.62 .../node_modules/@nestjs/core postinstall:                         to help us maintain this package.
+#10 10.62 .../node_modules/@nestjs/core postinstall:                                          
+#10 10.62 .../node_modules/@nestjs/core postinstall:                         Number of contributors: undefined
+#10 10.62 .../node_modules/@nestjs/core postinstall:                              Number of backers: 1221
+#10 10.66 .../node_modules/@nestjs/core postinstall:                              Annual budget: $120,965
+#10 10.66 .../node_modules/@nestjs/core postinstall:                               Current balance: $129
+#10 10.66 .../node_modules/@nestjs/core postinstall:                                          
+#10 10.66 .../node_modules/@nestjs/core postinstall:              Become a partner: https://opencollective.com/nest/donate
+#10 10.66 .../node_modules/@nestjs/core postinstall:                                          
+#10 10.70 .../node_modules/@nestjs/core postinstall: Done
+#10 11.14 .../node_modules/@prisma/engines postinstall: Done
+#10 11.22 .../prisma@5.22.0/node_modules/prisma preinstall$ node scripts/preinstall-entry.js
+#10 11.27 .../prisma@5.22.0/node_modules/prisma preinstall: Done
+#10 11.33 .../node_modules/@prisma/client postinstall$ node scripts/postinstall.js
+#10 12.00 .../node_modules/@prisma/client postinstall: prisma:warn We could not find your Prisma schema in the default locations (see: https://pris.ly/d/prisma-schema-location).
+#10 12.00 .../node_modules/@prisma/client postinstall: If you have a Prisma schema file in a custom path, you will need to run
+#10 12.00 .../node_modules/@prisma/client postinstall: `prisma generate --schema=./path/to/your/schema.prisma` to generate Prisma Client.
+#10 12.00 .../node_modules/@prisma/client postinstall: If you do not have a Prisma schema file yet, you can ignore this message.
+#10 12.02 .../node_modules/@prisma/client postinstall: Done
+#10 12.23 
+#10 12.31 Done in 11.1s using pnpm v10.28.0
+#10 DONE 12.3s
+
+#11 [build 3/3] RUN pnpm --filter @beanchain/contracts build && pnpm --filter @beanchain/api build
+#11 0.590 
+#11 0.590 > @beanchain/contracts@0.1.0 build /repo/packages/contracts
+#11 0.590 > hardhat compile && node scripts/export-abi.js
+#11 0.590 
+#11 1.633 Downloading compiler 0.8.24
+#11 2.362 Downloading compiler 0.8.24
+#11 7.464 Generating typings for: 24 artifacts in dir: typechain-types for target: ethers-v6
+#11 8.842 Successfully generated 80 typings!
+#11 8.846 Compiled 24 Solidity files successfully (evm target: cancun).
+#11 8.922 ABI exportados: IdentityRegistry, HarvestCompliance, HarvestToken, DocumentRegistry, MockStablecoin
+#11 9.354 
+#11 9.354 > @beanchain/api@0.1.0 build /repo/apps/api
+#11 9.354 > prisma generate && nest build
+#11 9.354 
+#11 9.892 Prisma schema loaded from prisma/schema.prisma
+#11 10.57 
+#11 10.57 ✔ Generated Prisma Client (v5.22.0) to ./../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client in 287ms
+#11 10.57 
+#11 10.57 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#11 10.57 
+#11 10.57 Tip: Want real-time updates to your database without manual polling? Discover how with Pulse: https://pris.ly/tip-0-pulse
+#11 10.57 
+#11 DONE 17.0s
+
+#12 [runtime 1/3] COPY --from=build /repo /repo
+#12 DONE 8.8s
+
+#13 [runtime 2/3] WORKDIR /repo/apps/api
+#13 DONE 0.0s
+
+#14 [runtime 3/3] RUN addgroup -S app && adduser -S app -G app && mkdir -p uploads && chown app:app uploads
+#14 DONE 0.1s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 8.2s done
+#15 writing image sha256:a002c2642a01c9073e1d35c98a209275bee30078ba56b97bbd3ca25c5773037c done
+#15 naming to docker.io/library/beanchain-api done
+#15 DONE 8.2s
