@@ -16,3 +16,6 @@ packages/contracts/deployments/localhost.json
 
 # Uploads locales
 apps/api/uploads/
+
+# Base de datos embebida local
+.local-db/

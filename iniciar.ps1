@@ -10,13 +10,16 @@
     2. Prepara PostgreSQL: con Docker Desktop si está instalado; si no, instala PostgreSQL 16 con winget.
     3. Crea los ficheros .env con secretos aleatorios (sólo la primera vez).
     4. Instala dependencias, compila los contratos, aplica migraciones y carga datos de ejemplo.
-    5. Abre la API (puerto 4000) y la web (puerto 3000) en ventanas propias y lanza el navegador.
+    5. Abre la API (puerto 4100) y la web (puerto 3100) en ventanas propias y lanza el navegador.
 #>
 param(
   [switch]$ConBlockchain
 )
 
-$ErrorActionPreference = 'Stop'
+# Los comandos externos (docker, pnpm…) escriben avisos por stderr: los errores se controlan con $LASTEXITCODE.
+$ErrorActionPreference = 'Continue'
+try { Start-Transcript -Path (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'iniciar.log') -Force | Out-Null } catch {}
+trap { Write-Host "`nERROR: $($_.Exception.Message)" -ForegroundColor Red; Write-Host $_.ScriptStackTrace; try { Stop-Transcript | Out-Null } catch {}; exit 1 }
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Root
 
@@ -60,9 +63,9 @@ $DbPort = 5432
 $DbUrl = $null
 $dockerOk = $false
 if (Tiene 'docker') {
-  docker info *> $null
+  docker info 2>&1 | Out-Null
   $dockerOk = ($LASTEXITCODE -eq 0)
-  if (-not $dockerOk) { Aviso 'Docker está instalado pero no arrancado. Abre Docker Desktop si prefieres usarlo; sigo sin él.' }
+  if (-not $dockerOk) { Aviso 'Docker no responde; uso PostgreSQL instalado en Windows.' }
 }
 
 if ($dockerOk) {
@@ -80,35 +83,24 @@ if ($dockerOk) {
   $DbPort = [int]((docker port beanchain-postgres 5432/tcp | Select-Object -First 1).Split(':')[-1])
   Write-Host "    PostgreSQL en Docker (puerto $DbPort)"
   for ($i = 0; $i -lt 30; $i++) {
-    docker exec beanchain-postgres pg_isready -U beanchain *> $null
+    docker exec beanchain-postgres pg_isready -U beanchain 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) { break }
     Start-Sleep 1
   }
   $DbUrl = "postgresql://beanchain:beanchain@localhost:$DbPort/beanchain?schema=public"
 } else {
-  # PostgreSQL nativo
-  $pgBin = Get-ChildItem 'C:\Program Files\PostgreSQL\*\bin\psql.exe' -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
-  if (-not $pgBin) {
-    if (-not (Tiene 'winget')) { Falla 'No hay Docker ni PostgreSQL ni winget. Instala Docker Desktop (https://www.docker.com/products/docker-desktop) y vuelve a ejecutar.' }
-    Aviso 'Instalando PostgreSQL 16 con winget (puede tardar unos minutos y pedir permisos de administrador)…'
-    winget install --id PostgreSQL.PostgreSQL.16 -e --accept-source-agreements --accept-package-agreements `
-      --override '--mode unattended --unattendedmodeui minimal --superpassword beanchain --serverport 5432' | Out-Host
-    $pgBin = Get-ChildItem 'C:\Program Files\PostgreSQL\*\bin\psql.exe' -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
-    if (-not $pgBin) { Falla 'No se ha podido instalar PostgreSQL. Instala Docker Desktop o PostgreSQL 16 a mano y vuelve a ejecutar.' }
-    $env:PGPASSWORD = 'beanchain'
+  # PostgreSQL embebido propio en el puerto 5433 (no choca con otros PostgreSQL del equipo)
+  $ready = Join-Path $Root '.local-db\ready'
+  if (Test-Path $ready) { Remove-Item $ready -Force -ErrorAction SilentlyContinue }
+  if (PuertoOcupado 5433) {
+    Write-Host '    Base de datos de BeanChain ya en marcha (puerto 5433)'
   } else {
-    if (-not $env:PGPASSWORD) {
-      $sec = Read-Host 'Contraseña del usuario "postgres" de tu PostgreSQL' -AsSecureString
-      $env:PGPASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($sec))
-    }
+    Write-Host '    Arrancando la base de datos de BeanChain (la primera vez descarga unos 100 MB)…'
+    Start-Process cmd -ArgumentList '/k', "title BeanChain base de datos && cd /d `"$Root`" && node infra/local-db.mjs" | Out-Null
+    for ($i = 0; $i -lt 200 -and -not (Test-Path $ready); $i++) { Start-Sleep 3 }
+    if (-not (Test-Path $ready)) { Falla "La base de datos no arranca. Mira la ventana 'BeanChain base de datos'." }
   }
-  $psql = $pgBin.FullName
-  & $psql -h localhost -U postgres -d postgres -tAc "DO `$`$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname='beanchain') THEN CREATE ROLE beanchain LOGIN PASSWORD 'beanchain' CREATEDB; END IF; END `$`$;" | Out-Null
-  if ($LASTEXITCODE -ne 0) { Falla 'No me puedo conectar a PostgreSQL con el usuario postgres. Revisa la contraseña.' }
-  $hasDb = & $psql -h localhost -U postgres -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='beanchain'"
-  if (-not $hasDb) { & $psql -h localhost -U postgres -d postgres -c 'CREATE DATABASE beanchain OWNER beanchain' | Out-Null }
-  Write-Host '    PostgreSQL nativo (puerto 5432)'
-  $DbUrl = 'postgresql://beanchain:beanchain@localhost:5432/beanchain?schema=public'
+  $DbUrl = 'postgresql://beanchain:beanchain@localhost:5433/beanchain?schema=public'
 }
 
 # ---------------------------------------------------------------------------
@@ -121,13 +113,14 @@ if (-not (Test-Path $apiEnv)) {
   $c = $c -replace 'JWT_REFRESH_SECRET=.*', "JWT_REFRESH_SECRET=$(Secreto)"
   $c = $c -replace 'APP_ENCRYPTION_KEY=.*', "APP_ENCRYPTION_KEY=$(Secreto)"
   $c = $c -replace 'SEED_ADMIN_PASSWORD=.*', 'SEED_ADMIN_PASSWORD=BeanChain2026!'
+  $c = $c -replace 'PORT=4000', 'PORT=4100' -replace 'localhost:3000', 'localhost:3100' -replace 'localhost:4000', 'localhost:4100'
   Set-Content -Path $apiEnv -Value $c -Encoding UTF8
   Write-Host '    Creado apps\api\.env'
 } else {
   (Get-Content $apiEnv) -replace '^DATABASE_URL=.*', "DATABASE_URL=$DbUrl" | Set-Content $apiEnv -Encoding UTF8
 }
 $webEnv = Join-Path $Root 'apps\web\.env.local'
-if (-not (Test-Path $webEnv)) { Copy-Item (Join-Path $Root 'apps\web\.env.example') $webEnv }
+Set-Content -Path $webEnv -Value 'NEXT_PUBLIC_API_URL=http://localhost:4100/v1' -Encoding ASCII
 
 # ---------------------------------------------------------------------------
 Paso 'Instalando dependencias (la primera vez tarda unos minutos)'
@@ -140,9 +133,13 @@ if ($LASTEXITCODE -ne 0) { Falla 'Ha fallado la compilación de los contratos.' 
 
 Paso 'Preparando la base de datos'
 Push-Location apps\api
-npx prisma migrate deploy
+$env:PRISMA_HIDE_UPDATE_MESSAGE = '1'
+npx prisma generate 2>&1 | Out-Host
+if ($LASTEXITCODE -ne 0) { Pop-Location; Falla 'Ha fallado prisma generate.' }
+npx prisma migrate deploy 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Pop-Location; Falla 'Han fallado las migraciones.' }
-npx prisma db seed
+$env:SEED_ADMIN_EMAIL = 'admin@beanchain.local'; $env:SEED_ADMIN_PASSWORD = 'BeanChain2026!'
+node prisma/seed.js 2>&1 | Out-Host
 if ($LASTEXITCODE -ne 0) { Pop-Location; Falla 'Ha fallado la carga de datos de ejemplo.' }
 Pop-Location
 
@@ -173,26 +170,26 @@ if ($ConBlockchain) {
 
 # ---------------------------------------------------------------------------
 Paso 'Arrancando API y web'
-if (PuertoOcupado 4000) { Aviso 'Ya hay algo en el puerto 4000 (¿una API anterior?). No abro otra.' }
+if (PuertoOcupado 4100) { Aviso 'Ya hay algo en el puerto 4100 (¿una API anterior?). No abro otra.' }
 else {
   Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$Root'; `$Host.UI.RawUI.WindowTitle='BeanChain · API'; pnpm --filter @beanchain/api start:dev" | Out-Null
 }
-if (PuertoOcupado 3000) { Aviso 'Ya hay algo en el puerto 3000. No abro otra web.' }
+if (PuertoOcupado 3100) { Aviso 'Ya hay algo en el puerto 3100. No abro otra web.' }
 else {
-  Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$Root'; `$Host.UI.RawUI.WindowTitle='BeanChain · web'; pnpm --filter @beanchain/web dev" | Out-Null
+  Start-Process powershell -ArgumentList '-NoExit', '-Command', "Set-Location '$Root'; `$Host.UI.RawUI.WindowTitle='BeanChain · web'; pnpm --filter @beanchain/web exec next dev -p 3100" | Out-Null
 }
 
 Write-Host '    Esperando a que la web responda…'
 for ($i = 0; $i -lt 120; $i++) {
-  try { Invoke-WebRequest 'http://localhost:3000' -UseBasicParsing -TimeoutSec 5 | Out-Null; break } catch { Start-Sleep 2 }
+  try { Invoke-WebRequest 'http://localhost:3100' -UseBasicParsing -TimeoutSec 5 | Out-Null; break } catch { Start-Sleep 2 }
 }
-Start-Process 'http://localhost:3000'
+Start-Process 'http://localhost:3100'
 
 $admin = (Select-String -Path $apiEnv -Pattern '^SEED_ADMIN_EMAIL=(.*)').Matches.Groups[1].Value
 $pass = (Select-String -Path $apiEnv -Pattern '^SEED_ADMIN_PASSWORD=(.*)').Matches.Groups[1].Value
 Write-Host "`n BeanChain está en marcha" -ForegroundColor Green
-Write-Host '   Web:  http://localhost:3000'
-Write-Host '   API:  http://localhost:4000/health'
+Write-Host '   Web:  http://localhost:3100'
+Write-Host '   API:  http://localhost:4100/health'
 Write-Host "   Administrador: $admin  /  $pass"
 Write-Host '   Para pararlo, cierra las ventanas "BeanChain · API" y "BeanChain · web".'
 Read-Host "`nPulsa Enter para cerrar esta ventana"

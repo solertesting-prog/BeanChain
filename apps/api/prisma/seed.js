@@ -2,8 +2,8 @@
  * Datos iniciales: usuario administrador y una finca/oportunidad de ejemplo
  * en borrador. Ejecutar con `pnpm db:seed`.
  */
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
