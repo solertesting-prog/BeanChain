@@ -1,0 +1,4 @@
+
+> @beanchain/api@0.1.0 lint /home/runner/work/BeanChain/BeanChain/apps/api
+> tsc --noEmit -p tsconfig.json
+
