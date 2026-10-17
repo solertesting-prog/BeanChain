@@ -44,6 +44,10 @@ La blockchain funciona en dos modos (`BLOCKCHAIN_MODE`): `simulated` para desarr
 
 ## Puesta en marcha en local
 
+**En Windows:** haz doble clic en `iniciar.bat` (o `iniciar.bat -ConBlockchain` para usar además una blockchain local). Instala lo que falte, prepara la base de datos y abre la web.
+
+**Manual:**
+
 Requisitos: Node.js 20+, pnpm 10 y Docker.
 
 ```bash
