@@ -7,7 +7,10 @@
  * Necesita PostgreSQL (DATABASE_URL) con el esquema aplicado (`prisma db push`).
  */
 process.env.NODE_ENV = 'test';
-process.env.BLOCKCHAIN_MODE = 'simulated';
+// E2E_BLOCKCHAIN_MODE=live ejecuta el recorrido contra una red real (p. ej. `hardhat node`)
+// con los contratos desplegados y comprueba los saldos on-chain.
+const CHAIN_MODE = process.env.E2E_BLOCKCHAIN_MODE === 'live' ? 'live' : 'simulated';
+process.env.BLOCKCHAIN_MODE = CHAIN_MODE;
 process.env.KYC_PROVIDER = 'mock';
 process.env.MAIL_DRIVER = 'console';
 process.env.STORAGE_DRIVER = 'local';
@@ -21,6 +24,13 @@ import { createHash } from 'crypto';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/main';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { Contract, JsonRpcProvider } from 'ethers';
+
+const live = CHAIN_MODE === 'live';
+const itLive = live ? it : it.skip;
+const ERC20 = ['function balanceOf(address) view returns (uint256)'];
+const IDENTITY = ['function isVerified(address) view returns (bool)', 'function investorCountry(address) view returns (uint16)'];
+const DOCS = ['function isAnchored(bytes32) view returns (bool)'];
 
 describe('BeanChain (e2e)', () => {
   let app: NestExpressApplication;
@@ -38,6 +48,9 @@ describe('BeanChain (e2e)', () => {
   let investmentId = '';
   let amountCents = 0;
   let agronomyHash = '';
+  let tokenAddress = '';
+  let investorWallet = '';
+  const provider = live ? new JsonRpcProvider(process.env.RPC_URL ?? 'http://127.0.0.1:8545') : null;
 
   const api = (path: string) => `/v1${path}`;
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
@@ -69,7 +82,7 @@ describe('BeanChain (e2e)', () => {
 
   it('responde al health check', async () => {
     const res = await http.get('/health').expect(200);
-    expect(res.body).toMatchObject({ ok: true, blockchain: 'simulated' });
+    expect(res.body).toMatchObject({ ok: true, blockchain: CHAIN_MODE });
   });
 
   it('el administrador inicia sesión', async () => {
@@ -170,6 +183,24 @@ describe('BeanChain (e2e)', () => {
     const res = await http.post(api(`/admin/opportunities/${opportunityId}/publish`)).set(auth(adminToken)).expect(200);
     expect(res.body.status).toBe('PUBLISHED');
     expect(res.body.tokenAddress).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    tokenAddress = res.body.tokenAddress;
+  });
+
+  itLive('el token existe on-chain con su emisión máxima y 0 decimales', async () => {
+    expect(await provider!.getCode(tokenAddress)).not.toBe('0x');
+    const token = new Contract(
+      tokenAddress,
+      ['function cap() view returns (uint256)', 'function decimals() view returns (uint8)', 'function symbol() view returns (string)'],
+      provider!,
+    );
+    expect(await token.cap()).toBe(100n);
+    expect(await token.decimals()).toBe(0n);
+    expect(await token.symbol()).toBe(`T-${run.toUpperCase()}`.slice(0, 16));
+  });
+
+  itLive('el informe agronómico está anclado en el DocumentRegistry', async () => {
+    const docs = new Contract(process.env.DOCUMENT_REGISTRY_ADDRESS!, DOCS, provider!);
+    expect(await docs.isAnchored('0x' + agronomyHash)).toBe(true);
   });
 
   it('la oportunidad aparece en el escaparate público', async () => {
@@ -228,6 +259,13 @@ describe('BeanChain (e2e)', () => {
     expect(me.body.kyc.status).toBe('APPROVED');
     expect(me.body.wallet.address).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(me.body.wallet.onchainRegisteredAt).toBeTruthy();
+    investorWallet = me.body.wallet.address;
+  });
+
+  itLive('la wallet del inversor queda verificada en el IdentityRegistry', async () => {
+    const registry = new Contract(process.env.IDENTITY_REGISTRY_ADDRESS!, IDENTITY, provider!);
+    expect(await registry.isVerified(investorWallet)).toBe(true);
+    expect(await registry.investorCountry(investorWallet)).toBe(724n);
   });
 
   it('un inversor con KYC ve los documentos para inversores', async () => {
@@ -294,6 +332,11 @@ describe('BeanChain (e2e)', () => {
       .expect(200);
   });
 
+  itLive('los tokens están en la wallet del inversor on-chain', async () => {
+    const token = new Contract(tokenAddress, ERC20, provider!);
+    expect(await token.balanceOf(investorWallet)).toBe(5n);
+  });
+
   it('la cartera refleja los tokens', async () => {
     const res = await http.get(api('/portfolio')).set(auth(investorToken)).expect(200);
     expect(res.body.totals.investedCents).toBe(50_000);
@@ -335,6 +378,12 @@ describe('BeanChain (e2e)', () => {
     expect(portfolio.body.payouts).toHaveLength(1);
   });
 
+  itLive('el reparto llega en stablecoin a la wallet custodiada', async () => {
+    const stable = new Contract(process.env.PAYMENT_TOKEN_ADDRESS!, ERC20, provider!);
+    // 560,00 € con 6 decimales
+    expect(await stable.balanceOf(investorWallet)).toBe(560_000_000n);
+  });
+
   it('verifica públicamente un documento por su hash', async () => {
     const res = await http.get(api(`/documents/verify/${agronomyHash}`)).expect(200);
     expect(res.body.found).toBe(true);
@@ -346,6 +395,9 @@ describe('BeanChain (e2e)', () => {
   it('las estadísticas del backoffice cuadran', async () => {
     const res = await http.get(api('/admin/stats')).set(auth(adminToken)).expect(200);
     expect(res.body.raisedCents).toBeGreaterThanOrEqual(50_000);
-    expect(res.body.blockchainMode).toBe('simulated');
+    expect(res.body.blockchainMode).toBe(CHAIN_MODE);
+    if (live) {
+      expect(res.body.recentTransactions.every((t: { status: string }) => t.status !== 'FAILED')).toBe(true);
+    }
   });
 });

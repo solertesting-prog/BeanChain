@@ -30,7 +30,9 @@ async function main() {
     const mock = await ethers.deployContract("MockStablecoin", ["Mock EURC", "mEURC"]);
     await mock.waitForDeployment();
     paymentToken = await mock.getAddress();
-    console.log(`MockStablecoin: ${paymentToken} (sólo pruebas)`);
+    // Saldo de pruebas para que el operador pueda ejecutar repartos.
+    await (await mock.mint(operator, ethers.parseUnits("1000000", 6))).wait();
+    console.log(`MockStablecoin: ${paymentToken} (sólo pruebas, 1.000.000 acuñados al operador)`);
   }
 
   if (operator.toLowerCase() !== deployer.address.toLowerCase()) {

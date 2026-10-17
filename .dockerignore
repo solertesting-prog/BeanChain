@@ -1,0 +1,11 @@
+**/node_modules
+**/.next
+**/dist
+**/.env
+**/.env.local
+packages/contracts/artifacts
+packages/contracts/cache
+packages/contracts/typechain-types
+apps/api/uploads
+.git
+ci-logs

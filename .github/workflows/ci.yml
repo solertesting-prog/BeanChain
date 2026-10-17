@@ -112,6 +112,70 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  integration:
+    name: Integración on-chain (Hardhat)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: beanchain
+          POSTGRES_PASSWORD: beanchain
+          POSTGRES_DB: beanchain
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U beanchain"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://beanchain:beanchain@localhost:5432/beanchain?schema=public
+      NODE_ENV: test
+      E2E_BLOCKCHAIN_MODE: live
+      RPC_URL: http://127.0.0.1:8545
+      CHAIN_ID: 31337
+      # Cuenta 0 de Hardhat: clave pública y conocida, SÓLO para la red local.
+      OPERATOR_PRIVATE_KEY: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: mkdir -p "$LOGS"
+      - name: Instalar dependencias
+        run: pnpm install --no-frozen-lockfile 2>&1 | tee "$LOGS/install.log"
+      - name: Compilar contratos
+        run: pnpm --filter @beanchain/contracts build 2>&1 | tee "$LOGS/contracts.log"
+      - name: Arrancar nodo Hardhat
+        run: |
+          cd packages/contracts
+          nohup npx hardhat node --hostname 127.0.0.1 > "$LOGS/hardhat-node.log" 2>&1 &
+          for i in $(seq 1 30); do
+            curl -s -X POST -H 'Content-Type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}' http://127.0.0.1:8545 && break
+            sleep 1
+          done
+      - name: Desplegar contratos compartidos
+        run: |
+          cd packages/contracts
+          npx hardhat run scripts/deploy.ts --network localhost 2>&1 | tee "$LOGS/deploy.log"
+          D=deployments/localhost.json
+          echo "IDENTITY_REGISTRY_ADDRESS=$(node -p "require('./$D').identityRegistry")" >> "$GITHUB_ENV"
+          echo "DOCUMENT_REGISTRY_ADDRESS=$(node -p "require('./$D').documentRegistry")" >> "$GITHUB_ENV"
+          echo "PAYMENT_TOKEN_ADDRESS=$(node -p "require('./$D').paymentToken")" >> "$GITHUB_ENV"
+      - name: Preparar la API
+        run: |
+          pnpm --filter @beanchain/api prisma:generate
+          pnpm --filter @beanchain/api prisma:deploy
+      - name: Recorrido e2e contra la blockchain local
+        run: pnpm --filter @beanchain/api test:e2e --verbose 2>&1 | tee "$LOGS/e2e-live.log"
+      - name: Publicar resultados
+        if: always()
+        run: .github/scripts/publish-ci-output.sh integration
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   web:
     name: Web
     runs-on: ubuntu-latest
@@ -134,5 +198,26 @@ jobs:
       - name: Publicar resultados
         if: always()
         run: .github/scripts/publish-ci-output.sh web
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    name: Imágenes Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p "$LOGS"
+      - name: Construir imagen de la API
+        run: docker build -f apps/api/Dockerfile -t beanchain-api . 2>&1 | tee "$LOGS/api-image.log"
+      - name: Construir imagen de la web
+        run: docker build -f apps/web/Dockerfile --build-arg NEXT_PUBLIC_API_URL=https://api.example.com/v1 -t beanchain-web . 2>&1 | tee "$LOGS/web-image.log"
+      - name: Arrancar la web
+        run: |
+          docker run -d --name web -p 3000:3000 beanchain-web
+          for i in $(seq 1 20); do curl -fs http://localhost:3000/ -o /dev/null && break; sleep 1; done
+          curl -fsS http://localhost:3000/oportunidades -o /dev/null && echo "web OK" | tee "$LOGS/web-smoke.log"
+      - name: Publicar resultados
+        if: always()
+        run: .github/scripts/publish-ci-output.sh docker
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
