@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-ground text-ink font-sans antialiased;
+    line-height: 1.5;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+    font-weight: 500;
+  }
+  a {
+    @apply text-leaf underline-offset-2;
+  }
+  a:hover {
+    @apply text-leaf-dark;
+  }
+  :focus-visible {
+    outline: 2px solid #2e6a4b;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-card bg-white;
+  }
+  .btn {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[14px] px-5 text-[15px] font-semibold no-underline transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-leaf text-white hover:bg-leaf-dark hover:text-white;
+  }
+  .btn-secondary {
+    @apply btn border border-line bg-white text-ink hover:border-muted hover:text-ink;
+  }
+  .btn-danger {
+    @apply btn bg-danger-text text-white hover:opacity-90 hover:text-white;
+  }
+  .btn-ghost {
+    @apply btn px-3 text-ink hover:bg-track hover:text-ink;
+  }
+  .input {
+    @apply min-h-[44px] w-full rounded-xl border border-line bg-white px-3 py-2 text-[15px] text-ink placeholder:text-muted/70 focus:border-leaf focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-ink;
+  }
+  .hint {
+    @apply mt-1 text-[13px] text-muted;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium;
+  }
+  .section-title {
+    @apply font-display text-xl;
+  }
+  .table {
+    @apply w-full text-left text-sm;
+  }
+  .table th {
+    @apply border-b border-line px-3 py-2 font-medium text-muted;
+  }
+  .table td {
+    @apply border-b border-track px-3 py-2 align-top;
+  }
+}
