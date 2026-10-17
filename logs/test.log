@@ -1,0 +1,48 @@
+
+> @beanchain/contracts@0.1.0 test /home/runner/work/BeanChain/BeanChain/packages/contracts
+> hardhat test
+
+
+
+  IdentityRegistry
+    ✔ registra, consulta y elimina identidades (552ms)
+    ✔ caduca la verificación al pasar `expiresAt`
+    ✔ sólo los agentes pueden registrar y no se duplica
+
+  HarvestToken · emisión
+    ✔ tiene 0 decimales y los metadatos de la cosecha
+    ✔ sólo emite a wallets verificadas y respeta el límite
+    ✔ sólo los agentes pueden emitir
+    ✔ emite en lote
+
+  HarvestToken · transferencias
+    ✔ permite transferir entre inversores verificados
+    ✔ bloquea transferencias a wallets sin KYC
+    ✔ respeta transferFrom con las mismas reglas
+    ✔ congela wallets y tokens parciales
+    ✔ pausa y cierre detienen las transferencias
+    ✔ transferencia forzada y amortización liberan congelaciones
+
+  HarvestCompliance
+    ✔ bloquea países sancionados o no autorizados
+    ✔ limita el saldo máximo por inversor
+    ✔ limita y cuenta los titulares
+    ✔ sólo el token vinculado puede llamar a los hooks y sólo se vincula una vez
+
+  HarvestToken · repartos
+    ✔ reparte en proporción a los tokens
+    ✔ mantiene lo devengado cuando los tokens cambian de mano
+    ✔ conserva lo devengado tras amortizar los tokens
+    ✔ el agente puede empujar pagos, siempre al titular
+    ✔ no reparte sin tokens emitidos ni a wallets congeladas
+    ✔ sigue repartiendo después del cierre
+
+  HarvestToken · recuperación de wallet
+    ✔ traspasa saldo, congelaciones y pendiente a la nueva wallet
+
+  DocumentRegistry
+    ✔ ancla hashes una sola vez y los lista por cosecha
+
+
+  25 passing (790ms)
+
