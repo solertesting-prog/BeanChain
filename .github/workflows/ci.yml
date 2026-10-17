@@ -1,0 +1,85 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contracts:
+    name: Smart contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias
+        run: pnpm install --no-frozen-lockfile
+      - name: Subir lockfile generado
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-lock
+          path: pnpm-lock.yaml
+      - name: Compilar y exportar ABI
+        run: pnpm --filter @beanchain/contracts build
+      - name: Tests de contratos
+        run: pnpm --filter @beanchain/contracts test
+
+  api:
+    name: API
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: beanchain
+          POSTGRES_PASSWORD: beanchain
+          POSTGRES_DB: beanchain
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U beanchain"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://beanchain:beanchain@localhost:5432/beanchain?schema=public
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias
+        run: pnpm install --no-frozen-lockfile
+      - name: Compilar contratos (la API usa sus ABI)
+        run: pnpm --filter @beanchain/contracts build
+      - name: Generar cliente Prisma
+        run: pnpm --filter @beanchain/api prisma:generate
+      - name: Comprobar tipos
+        run: pnpm --filter @beanchain/api lint
+      - name: Compilar
+        run: pnpm --filter @beanchain/api build
+      - name: Tests unitarios
+        run: pnpm --filter @beanchain/api test
+      - name: Aplicar esquema
+        run: pnpm --filter @beanchain/api prisma:push
+      - name: Tests e2e
+        run: pnpm --filter @beanchain/api test:e2e
+      - name: Generar SQL de la migración inicial
+        run: |
+          cd apps/api
+          npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script > init-migration.sql
+      - name: Subir SQL de migración
+        uses: actions/upload-artifact@v4
+        with:
+          name: init-migration
+          path: apps/api/init-migration.sql

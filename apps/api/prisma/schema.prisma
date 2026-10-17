@@ -1,0 +1,481 @@
+// BeanChain · modelo de datos
+// Importes monetarios en céntimos de euro (Int). Límite práctico por campo:
+// 21 M€, por encima del máximo de 5 M€ por proyecto del Reglamento (UE) 2020/1503.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Usuarios, autenticación y KYC
+// ---------------------------------------------------------------------------
+
+enum Role {
+  INVESTOR
+  OPERATOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum InvestorCategory {
+  RETAIL
+  PROFESSIONAL
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  passwordHash     String
+  firstName        String
+  lastName         String
+  phone            String?
+  country          String           @db.Char(2) // ISO 3166-1 alfa-2 de residencia
+  locale           String           @default("es")
+  role             Role             @default(INVESTOR)
+  status           UserStatus       @default(ACTIVE)
+  investorCategory InvestorCategory @default(RETAIL)
+  emailVerifiedAt  DateTime?
+  emailVerifyToken String?          @unique
+  mfaEnabled       Boolean          @default(false)
+  mfaSecret        String? // cifrado con APP_ENCRYPTION_KEY
+  lastLoginAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  kyc            KycVerification[]
+  wallet         Wallet?
+  investments    Investment[]
+  payouts        DistributionPayout[]
+  notifications  Notification[]
+  refreshTokens  RefreshToken[]
+  auditLogs      AuditLog[]
+  harvestUpdates HarvestUpdate[]
+
+  @@index([role])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model KycVerification {
+  id            String    @id @default(cuid())
+  userId        String
+  provider      String
+  externalId    String?
+  status        KycStatus @default(PENDING)
+  level         String    @default("basic")
+  sanctionsHit  Boolean   @default(false)
+  pepHit        Boolean   @default(false)
+  rejectReason  String?
+  reviewedById  String?
+  approvedAt    DateTime?
+  expiresAt     DateTime?
+  rawPayload    Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([userId, createdAt])
+}
+
+model Wallet {
+  id                  String    @id @default(cuid())
+  userId              String    @unique
+  address             String    @unique
+  custodial           Boolean   @default(true)
+  encryptedKey        String? // AES-256-GCM; en producción usar KMS/MPC
+  onchainRegisteredAt DateTime?
+  registryTxHash      String?
+  createdAt           DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Fincas y oportunidades
+// ---------------------------------------------------------------------------
+
+enum Crop {
+  CACAO
+  COFFEE
+}
+
+enum FarmOwnerType {
+  OWNER
+  COOPERATIVE
+  PRODUCER
+}
+
+model Farm {
+  id                String        @id @default(cuid())
+  slug              String        @unique
+  name              String
+  crop              Crop
+  varieties         String[]
+  country           String        @db.Char(2)
+  region            String
+  municipality      String?
+  hectares          Float
+  altitudeM         Int?
+  latitude          Float?
+  longitude         Float?
+  description       String
+  ownerName         String
+  ownerType         FarmOwnerType @default(OWNER)
+  // [{ year: 2023, kg: 12000, pricePerKgCents: 520 }]
+  productionHistory Json          @default("[]")
+  sanctionsClear    Boolean       @default(false)
+  sanctionsNote     String?
+  sanctionsCheckedAt DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  opportunities Opportunity[]
+  documents     Document[]
+}
+
+enum OpportunityStatus {
+  DRAFT
+  PUBLISHED // captación abierta
+  FUNDED // objetivo alcanzado o captación cerrada
+  ACTIVE // cosecha en curso
+  DISTRIBUTING
+  CLOSED
+  CANCELLED
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Opportunity {
+  id                  String            @id @default(cuid())
+  slug                String            @unique
+  farmId              String
+  title               String
+  summary             String
+  description         String
+  harvestYear         Int
+  status              OpportunityStatus @default(DRAFT)
+  coverImageUrl       String?
+
+  // Económicos
+  targetAmountCents   Int
+  tokenPriceCents     Int
+  totalTokens         Int
+  minTokens           Int               @default(1)
+  maxTokensPerInvestor Int?
+  expectedReturnBps   Int // 1200 = 12,00 %
+  termMonths          Int
+  platformFeeBps      Int               @default(300)
+  buyerName           String?
+  riskLevel           RiskLevel         @default(HIGH)
+  risks               String[]
+
+  // Calendario
+  opensAt             DateTime?
+  closesAt            DateTime?
+  expectedPayoutAt    DateTime?
+  publishedAt         DateTime?
+
+  // Cumplimiento
+  blockedCountries    String[] // ISO alfa-2
+  maxHolders          Int?
+
+  // Token
+  tokenName           String
+  tokenSymbol         String            @unique
+  tokenAddress        String?           @unique
+  complianceAddress   String?
+  chainId             Int?
+  deployTxHash        String?
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  farm          Farm               @relation(fields: [farmId], references: [id])
+  investments   Investment[]
+  distributions Distribution[]
+  updates       HarvestUpdate[]
+  documents     Document[]
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Inversiones y pagos
+// ---------------------------------------------------------------------------
+
+enum InvestmentStatus {
+  PENDING_PAYMENT
+  PAID
+  TOKENS_ISSUED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CARD
+  STABLECOIN
+}
+
+model Investment {
+  id               String           @id @default(cuid())
+  userId           String
+  opportunityId    String
+  tokens           Int
+  amountCents      Int
+  feeCents         Int              @default(0)
+  status           InvestmentStatus @default(PENDING_PAYMENT)
+  paymentMethod    PaymentMethod
+  paymentReference String           @unique
+  riskAcknowledgedAt DateTime
+  expiresAt        DateTime
+  paidAt           DateTime?
+  issuedAt         DateTime?
+  mintTxHash       String?
+  cancelledAt      DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id])
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id])
+  payments    Payment[]
+
+  @@index([opportunityId, status])
+  @@index([userId])
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  investmentId String
+  provider     String
+  externalId   String?
+  amountCents  Int
+  currency     String        @default("EUR")
+  status       PaymentStatus @default(PENDING)
+  checkoutUrl  String?
+  raw          Json?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  investment Investment @relation(fields: [investmentId], references: [id])
+
+  @@unique([provider, externalId])
+}
+
+// ---------------------------------------------------------------------------
+// Repartos
+// ---------------------------------------------------------------------------
+
+enum DistributionKind {
+  PROFIT
+  PRINCIPAL
+  FINAL
+}
+
+enum DistributionStatus {
+  DRAFT
+  EXECUTED
+  FAILED
+}
+
+model Distribution {
+  id               String             @id @default(cuid())
+  opportunityId    String
+  kind             DistributionKind
+  totalAmountCents Int
+  status           DistributionStatus @default(DRAFT)
+  note             String?
+  txHash           String?
+  error            String?
+  executedAt       DateTime?
+  createdAt        DateTime           @default(now())
+
+  opportunity Opportunity          @relation(fields: [opportunityId], references: [id])
+  payouts     DistributionPayout[]
+
+  @@index([opportunityId])
+}
+
+model DistributionPayout {
+  id             String   @id @default(cuid())
+  distributionId String
+  userId         String
+  tokens         Int
+  amountCents    Int
+  claimTxHash    String?
+  createdAt      DateTime @default(now())
+
+  distribution Distribution @relation(fields: [distributionId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@unique([distributionId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Seguimiento de la cosecha y documentos
+// ---------------------------------------------------------------------------
+
+enum HarvestStage {
+  FLOWERING
+  HARVESTING
+  FERMENTING_DRYING
+  EXPORT
+  SOLD
+  DISTRIBUTED
+}
+
+model HarvestUpdate {
+  id            String       @id @default(cuid())
+  opportunityId String
+  authorId      String
+  stage         HarvestStage
+  title         String
+  body          String
+  publishedAt   DateTime     @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  author      User        @relation(fields: [authorId], references: [id])
+  documents   Document[]
+
+  @@index([opportunityId, publishedAt])
+}
+
+enum DocumentType {
+  CONTRACT
+  PROSPECTUS
+  KEY_INFO_SHEET
+  AGRONOMY_REPORT
+  BUYER_LETTER
+  LAND_TITLE
+  INVOICE
+  EXPORT_PERMIT
+  PHOTO
+  OTHER
+}
+
+enum DocumentVisibility {
+  PUBLIC
+  INVESTORS
+  ADMIN
+}
+
+model Document {
+  id              String             @id @default(cuid())
+  opportunityId   String?
+  farmId          String?
+  harvestUpdateId String?
+  type            DocumentType
+  title           String
+  fileName        String
+  mimeType        String
+  sizeBytes       Int
+  storageKey      String             @unique
+  sha256          String             @unique
+  visibility      DocumentVisibility @default(INVESTORS)
+  anchoredTxHash  String?
+  anchoredAt      DateTime?
+  uploadedById    String?
+  createdAt       DateTime           @default(now())
+
+  opportunity   Opportunity?   @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  farm          Farm?          @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  harvestUpdate HarvestUpdate? @relation(fields: [harvestUpdateId], references: [id], onDelete: SetNull)
+
+  @@index([opportunityId])
+}
+
+// ---------------------------------------------------------------------------
+// Sistema
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+enum ChainTxStatus {
+  SUBMITTED
+  CONFIRMED
+  FAILED
+  SIMULATED
+}
+
+model ChainTransaction {
+  id            String        @id @default(cuid())
+  kind          String
+  reference     String? // id de la entidad relacionada
+  txHash        String?
+  status        ChainTxStatus
+  error         String?
+  createdAt     DateTime      @default(now())
+
+  @@index([reference])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  data      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}

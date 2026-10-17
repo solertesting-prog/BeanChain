@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: beanchain
+      POSTGRES_PASSWORD: beanchain
+      POSTGRES_DB: beanchain
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beanchain"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  hardhat:
+    profiles: ["chain"]
+    image: node:22-alpine
+    working_dir: /repo/packages/contracts
+    command: sh -c "corepack enable && pnpm install && pnpm node"
+    ports:
+      - "8545:8545"
+    volumes:
+      - ./:/repo
+
+volumes:
+  pgdata:
