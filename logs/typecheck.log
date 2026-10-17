@@ -1,0 +1,4 @@
+
+> @beanchain/web@0.1.0 lint /home/runner/work/BeanChain/BeanChain/apps/web
+> tsc --noEmit
+

@@ -1,0 +1,57 @@
+
+> @beanchain/web@0.1.0 build /home/runner/work/BeanChain/BeanChain/apps/web
+> next build
+
+⚠ No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/docs/messages/no-cache
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/26) ...
+   Generating static pages (6/26) 
+   Generating static pages (12/26) 
+   Generating static pages (19/26) 
+ ✓ Generating static pages (26/26)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    1.96 kB         103 kB
+├ ○ /_not-found                          150 B          87.4 kB
+├ ○ /admin                               5.08 kB         101 kB
+├ ○ /admin/auditoria                     4.63 kB         101 kB
+├ ○ /admin/fincas                        4.54 kB         100 kB
+├ ƒ /admin/fincas/[id]                   4.13 kB         104 kB
+├ ○ /admin/fincas/nueva                  372 B           100 kB
+├ ○ /admin/inversiones                   5.45 kB         101 kB
+├ ○ /admin/kyc                           4.98 kB         101 kB
+├ ○ /admin/oportunidades                 4.58 kB         101 kB
+├ ƒ /admin/oportunidades/[id]            5.01 kB         108 kB
+├ ○ /admin/oportunidades/nueva           594 B           103 kB
+├ ○ /admin/usuarios                      5.47 kB         101 kB
+├ ○ /cartera                             7.39 kB         103 kB
+├ ○ /como-funciona                       176 B          96.1 kB
+├ ○ /entrar                              3.9 kB         99.9 kB
+├ ○ /notificaciones                      5.38 kB         101 kB
+├ ○ /oportunidades                       972 B           102 kB
+├ ƒ /oportunidades/[slug]                4.93 kB         106 kB
+├ ƒ /oportunidades/[slug]/invertir       7.7 kB          104 kB
+├ ○ /perfil                              15.3 kB         111 kB
+├ ○ /perfil/verificacion                 6.67 kB         103 kB
+├ ○ /privacidad                          150 B          87.4 kB
+├ ○ /registro                            5.6 kB          102 kB
+├ ○ /riesgos                             150 B          87.4 kB
+├ ○ /terminos                            150 B          87.4 kB
+├ ○ /verificar                           4.95 kB         101 kB
+└ ○ /verificar-email                     3.49 kB        99.4 kB
++ First Load JS shared by all            87.3 kB
+  ├ chunks/5b8f0dd8-a5881760e78935fb.js  53.6 kB
+  ├ chunks/749-f0d50c453194d9e0.js       31.7 kB
+  └ other shared chunks (total)          1.9 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
