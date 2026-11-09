@@ -216,6 +216,20 @@ jobs:
           docker run -d --name web -p 3000:3000 beanchain-web
           for i in $(seq 1 20); do curl -fs http://localhost:3000/ -o /dev/null && break; sleep 1; done
           curl -fsS http://localhost:3000/oportunidades -o /dev/null && echo "web OK" | tee "$LOGS/web-smoke.log"
+      - name: Pila de producción completa (deploy/docker-compose.prod.yml)
+        run: |
+          cd deploy
+          printf 'DB_PASSWORD=ci\nPUBLIC_URL=http://localhost\nSITE_ADDRESS=:80\nJWT_ACCESS_SECRET=a\nJWT_REFRESH_SECRET=b\nAPP_ENCRYPTION_KEY=%s\nBLOCKCHAIN_MODE=simulated\nKYC_PROVIDER=mock\nMAIL_DRIVER=console\nSEED_ADMIN_EMAIL=admin@beanchain.local\nSEED_ADMIN_PASSWORD=Prueba123456\n' "$(openssl rand -hex 32)" > .env
+          docker compose -f docker-compose.prod.yml up -d --build 2>&1 | tail -20
+          for i in $(seq 1 60); do curl -fs http://localhost/health && break; sleep 5; done
+          docker compose -f docker-compose.prod.yml exec -T api node prisma/seed.js
+          curl -fsS http://localhost/health | tee "$LOGS/prod-health.log"
+          curl -fsS http://localhost/v1/opportunities -o /dev/null
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{"email":"admin@beanchain.local","password":"Prueba123456"}' http://localhost/v1/auth/login | grep -q accessToken && echo "login OK" | tee -a "$LOGS/prod-health.log"
+          curl -fsS http://localhost/oportunidades -o /dev/null && echo "web OK" | tee -a "$LOGS/prod-health.log"
+      - name: Logs de la pila
+        if: failure()
+        run: cd deploy && docker compose -f docker-compose.prod.yml logs --tail 80 > "$LOGS/prod-stack.log" 2>&1 || true
       - name: Publicar resultados
         if: always()
         run: .github/scripts/publish-ci-output.sh docker

@@ -1,0 +1,13 @@
+# SITE_ADDRESS = ":80" (sólo IP) o "tu-dominio.com" (HTTPS automático con Let's Encrypt)
+{$SITE_ADDRESS} {
+	encode gzip
+	handle /v1/* {
+		reverse_proxy api:4000
+	}
+	handle /health {
+		reverse_proxy api:4000
+	}
+	handle {
+		reverse_proxy web:3000
+	}
+}

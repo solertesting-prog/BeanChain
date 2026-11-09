@@ -1,0 +1,68 @@
+# BeanChain en un único servidor: PostgreSQL + API + web detrás de Caddy (puerto 80/443).
+# Lo usa deploy/aws-lightsail.sh. Variables en deploy/.env (las genera el script).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: beanchain
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: beanchain
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U beanchain"]
+      interval: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # 'staging': sin correo real todavía, así no se exige verificar el email antes del KYC de pruebas
+      NODE_ENV: staging
+      PORT: 4000
+      DATABASE_URL: postgresql://beanchain:${DB_PASSWORD}@postgres:5432/beanchain?schema=public
+      APP_URL: ${PUBLIC_URL}
+      API_URL: ${PUBLIC_URL}
+      CORS_ORIGINS: ${PUBLIC_URL}
+      STORAGE_DRIVER: local
+      STORAGE_LOCAL_DIR: /repo/apps/api/uploads
+    volumes:
+      - uploads:/repo/apps/api/uploads
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /v1
+    restart: unless-stopped
+    depends_on:
+      - api
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - api
+      - web
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
