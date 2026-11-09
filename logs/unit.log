@@ -1,0 +1,41 @@
+
+> @beanchain/api@0.1.0 test /home/runner/work/BeanChain/BeanChain/apps/api
+> jest --verbose
+
+PASS src/investments/investment-rules.spec.ts
+  evaluateInvestment
+    ✓ acepta una inversión válida (5 ms)
+    ✓ rechaza con KYC_REQUIRED (1 ms)
+    ✓ rechaza con COUNTRY_BLOCKED (1 ms)
+    ✓ rechaza con NOT_OPEN
+    ✓ rechaza con NOT_OPEN (1 ms)
+    ✓ rechaza con CLOSED
+    ✓ rechaza con TOKEN_NOT_DEPLOYED
+    ✓ rechaza con BELOW_MIN
+    ✓ rechaza con ABOVE_MAX
+    ✓ rechaza con SOLD_OUT
+    ✓ rechaza con RISK_NOT_ACKNOWLEDGED (11 ms)
+    ✓ pide confirmación expresa a minoristas por encima de 1.000 € (1 ms)
+    ✓ aplica el 5 % del patrimonio declarado
+    ✓ no limita a inversores profesionales
+
+PASS src/common/money.spec.ts
+  money
+    ✓ calcula puntos básicos con redondeo (3 ms)
+    ✓ convierte céntimos a unidades del stablecoin (6 ms)
+    ✓ reparte de forma proporcional y la suma cuadra (1 ms)
+    ✓ respeta las proporciones
+    ✓ devuelve ceros sin titulares
+
+PASS src/common/crypto.service.spec.ts
+  CryptoService
+    ✓ cifra y descifra (3 ms)
+    ✓ usa un IV distinto cada vez
+    ✓ detecta manipulaciones (8 ms)
+    ✓ calcula sha256
+
+Test Suites: 3 passed, 3 total
+Tests:       23 passed, 23 total
+Snapshots:   0 total
+Time:        4.07 s
+Ran all test suites.

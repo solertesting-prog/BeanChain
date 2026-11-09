@@ -1,0 +1,18 @@
+
+> @beanchain/api@0.1.0 prisma:deploy /home/runner/work/BeanChain/BeanChain/apps/api
+> prisma migrate deploy
+
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "beanchain", schema "public" at "localhost:5432"
+
+1 migration found in prisma/migrations
+
+Applying migration `20261017000000_init`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20261017000000_init/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
