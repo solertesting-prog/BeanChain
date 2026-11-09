@@ -1,0 +1,9 @@
+
+> @beanchain/contracts@0.1.0 build /home/runner/work/BeanChain/BeanChain/packages/contracts
+> hardhat compile && node scripts/export-abi.js
+
+Downloading compiler 0.8.24
+Generating typings for: 24 artifacts in dir: typechain-types for target: ethers-v6
+Successfully generated 80 typings!
+Compiled 24 Solidity files successfully (evm target: cancun).
+ABI exportados: IdentityRegistry, HarvestCompliance, HarvestToken, DocumentRegistry, MockStablecoin

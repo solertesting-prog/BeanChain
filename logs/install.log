@@ -1,0 +1,32 @@
+Scope: all 4 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +1104
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1104, reused 0, downloaded 48, added 14
+Progress: resolved 1104, reused 0, downloaded 195, added 102
+Progress: resolved 1104, reused 0, downloaded 441, added 304
+Progress: resolved 1104, reused 0, downloaded 682, added 650
+Progress: resolved 1104, reused 0, downloaded 710, added 670
+Progress: resolved 1104, reused 0, downloaded 761, added 696
+Progress: resolved 1104, reused 0, downloaded 976, added 830
+Progress: resolved 1104, reused 0, downloaded 1103, added 1072
+Progress: resolved 1104, reused 0, downloaded 1103, added 1104, done
+.../node_modules/@prisma/engines postinstall$ node scripts/postinstall.js
+.../keccak@3.0.4/node_modules/keccak install$ node-gyp-build || exit 0
+.../node_modules/secp256k1 install$ node-gyp-build || exit 0
+.../node_modules/@nestjs/core postinstall$ opencollective || exit 0
+.../keccak@3.0.4/node_modules/keccak install: Done
+.../node_modules/@nestjs/core postinstall: Done
+.../node_modules/secp256k1 install: Done
+.../node_modules/@prisma/engines postinstall: Done
+.../prisma@5.22.0/node_modules/prisma preinstall$ node scripts/preinstall-entry.js
+.../prisma@5.22.0/node_modules/prisma preinstall: Done
+.../node_modules/@prisma/client postinstall$ node scripts/postinstall.js
+.../node_modules/@prisma/client postinstall: prisma:warn We could not find your Prisma schema in the default locations (see: https://pris.ly/d/prisma-schema-location).
+.../node_modules/@prisma/client postinstall: If you have a Prisma schema file in a custom path, you will need to run
+.../node_modules/@prisma/client postinstall: `prisma generate --schema=./path/to/your/schema.prisma` to generate Prisma Client.
+.../node_modules/@prisma/client postinstall: If you do not have a Prisma schema file yet, you can ignore this message.
+.../node_modules/@prisma/client postinstall: Done
+
+Done in 10.6s using pnpm v10.28.0
