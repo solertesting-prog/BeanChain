@@ -1,0 +1,130 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 836B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:22-alpine
+#2 DONE 0.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 216B done
+#3 DONE 0.0s
+
+#4 [base 1/3] FROM docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202
+#4 resolve docker.io/library/node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 done
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 11.18kB 0.0s done
+#5 DONE 0.0s
+
+#6 [runtime 2/4] WORKDIR /app
+#6 DONE 6.1s
+
+#7 [base 2/3] RUN corepack enable
+#7 DONE 6.1s
+
+#8 [base 3/3] WORKDIR /repo
+#8 DONE 0.0s
+
+#9 [build 1/3] COPY . .
+#9 DONE 0.0s
+
+#10 [build 2/3] RUN pnpm install --no-frozen-lockfile --filter @beanchain/web...
+#10 0.134 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-10.28.0.tgz
+#10 0.989 Lockfile is up to date, resolution step is skipped
+#10 1.025 Progress: resolved 1, reused 0, downloaded 0, added 0
+#10 1.040 .                                        | +135 ++++++++++++++
+#10 1.640 
+#10 1.640    ╭───────────────────────────────────────────────╮
+#10 1.640    │                                               │
+#10 1.640    │     Update available! 10.28.0 → 12.18.0.      │
+#10 1.640    │     Changelog: https://pnpm.io/v/12.18.0      │
+#10 1.640    │   To update, run: corepack use pnpm@12.18.0   │
+#10 1.640    │                                               │
+#10 1.640    ╰───────────────────────────────────────────────╯
+#10 1.640 
+#10 2.026 Progress: resolved 135, reused 0, downloaded 71, added 42
+#10 3.026 Progress: resolved 135, reused 0, downloaded 134, added 134
+#10 4.906 Progress: resolved 135, reused 0, downloaded 135, added 134
+#10 4.918 Progress: resolved 135, reused 0, downloaded 135, added 135, done
+#10 5.020 Done in 4.3s using pnpm v10.28.0
+#10 DONE 7.6s
+
+#11 [build 3/3] RUN pnpm --filter @beanchain/web build
+#11 0.450 
+#11 0.450 > @beanchain/web@0.1.0 build /repo/apps/web
+#11 0.450 > next build
+#11 0.450 
+#11 0.883   ▲ Next.js 14.2.35
+#11 0.883 
+#11 0.893    Creating an optimized production build ...
+#11 9.673  ✓ Compiled successfully
+#11 9.674    Linting and checking validity of types ...
+#11 12.56    Collecting page data ...
+#11 13.03    Generating static pages (0/26) ...
+#11 13.60    Generating static pages (6/26) 
+#11 13.71    Generating static pages (12/26) 
+#11 13.83    Generating static pages (19/26) 
+#11 13.88  ✓ Generating static pages (26/26)
+#11 13.97    Finalizing page optimization ...
+#11 13.97    Collecting build traces ...
+#11 20.57 
+#11 20.57 Route (app)                              Size     First Load JS
+#11 20.57 ┌ ○ /                                    1.96 kB         103 kB
+#11 20.57 ├ ○ /_not-found                          150 B          87.4 kB
+#11 20.57 ├ ○ /admin                               5.08 kB         101 kB
+#11 20.57 ├ ○ /admin/auditoria                     4.63 kB         101 kB
+#11 20.57 ├ ○ /admin/fincas                        4.54 kB         100 kB
+#11 20.57 ├ ƒ /admin/fincas/[id]                   4.13 kB         104 kB
+#11 20.57 ├ ○ /admin/fincas/nueva                  372 B           100 kB
+#11 20.57 ├ ○ /admin/inversiones                   5.45 kB         101 kB
+#11 20.57 ├ ○ /admin/kyc                           4.98 kB         101 kB
+#11 20.57 ├ ○ /admin/oportunidades                 4.58 kB         101 kB
+#11 20.57 ├ ƒ /admin/oportunidades/[id]            5.01 kB         108 kB
+#11 20.57 ├ ○ /admin/oportunidades/nueva           595 B           103 kB
+#11 20.57 ├ ○ /admin/usuarios                      5.47 kB         101 kB
+#11 20.57 ├ ○ /cartera                             7.39 kB         103 kB
+#11 20.57 ├ ○ /como-funciona                       178 B          96.1 kB
+#11 20.57 ├ ○ /entrar                              3.9 kB         99.9 kB
+#11 20.57 ├ ○ /notificaciones                      5.38 kB         101 kB
+#11 20.57 ├ ○ /oportunidades                       972 B           102 kB
+#11 20.57 ├ ƒ /oportunidades/[slug]                4.93 kB         106 kB
+#11 20.57 ├ ƒ /oportunidades/[slug]/invertir       7.71 kB         104 kB
+#11 20.57 ├ ○ /perfil                              15.3 kB         111 kB
+#11 20.57 ├ ○ /perfil/verificacion                 6.67 kB         103 kB
+#11 20.57 ├ ○ /privacidad                          150 B          87.4 kB
+#11 20.57 ├ ○ /registro                            5.6 kB          102 kB
+#11 20.57 ├ ○ /riesgos                             150 B          87.4 kB
+#11 20.57 ├ ○ /terminos                            150 B          87.4 kB
+#11 20.57 ├ ○ /verificar                           4.95 kB         101 kB
+#11 20.57 └ ○ /verificar-email                     3.49 kB        99.5 kB
+#11 20.57 + First Load JS shared by all            87.3 kB
+#11 20.57   ├ chunks/5b8f0dd8-a5881760e78935fb.js  53.6 kB
+#11 20.57   ├ chunks/749-f0d50c453194d9e0.js       31.7 kB
+#11 20.57   └ other shared chunks (total)          1.9 kB
+#11 20.57 
+#11 20.57 
+#11 20.57 ○  (Static)   prerendered as static content
+#11 20.57 ƒ  (Dynamic)  server-rendered on demand
+#11 20.57 
+#11 DONE 21.0s
+
+#12 [runtime 3/4] COPY --from=build /repo/apps/web/.next/standalone ./
+#12 DONE 0.3s
+
+#13 [runtime 4/4] COPY --from=build /repo/apps/web/.next/static ./apps/web/.next/static
+#13 DONE 0.0s
+
+#14 exporting to image
+#14 exporting layers
+#14 exporting layers 0.5s done
+#14 exporting manifest sha256:f60a40d6256c5791b24db839a18f896da5cccfe11a745888e298f6f080fb0fda done
+#14 exporting config sha256:2e0fc6dd107f79c054bf1351cd23e1b8928d0ccf5bd3d3a8a24feeef4ad77c79 done
+#14 exporting attestation manifest sha256:9eba69ffa99364b7ecf47e7d894eb52d0024405214ad143904d477cab723b8d2 done
+#14 exporting manifest list sha256:71c3802f2227995d57456c6ddeaf380ab8c978cea9372660be83aacf9c1f7d24 done
+#14 naming to docker.io/library/beanchain-web:latest done
+#14 unpacking to docker.io/library/beanchain-web:latest
+#14 unpacking to docker.io/library/beanchain-web:latest 0.2s done
+#14 DONE 0.8s
